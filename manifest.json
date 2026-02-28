@@ -1,0 +1,24 @@
+{
+  "name": "FX Profit Lite",
+  "short_name": "FX Profit Lite",
+  "description": "FXトレーダー専用の収支管理アプリです。収支金額だけでなくトレード回数やpips表示にも切り替え可能",
+  "start_url": "https://fx-profit.github.io/lite/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
