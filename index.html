@@ -103,7 +103,6 @@
             will-change: transform, opacity;
         }
         
-        /* アニメーション用クラス: 戻る時やスライドイン時に使用 */
         .is-animating { transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
 
         .day-header { background: #f8f9fa; font-size: 0.7rem; font-weight: bold; padding: 6px 0; text-align: center; }
@@ -204,9 +203,7 @@
         </div>
 
         <div class="action-group">
-            <!-- <button class="btn cum-btn" onclick="showCumulativeModal()">累計を表示</button> -->
             <button class="btn toggle-btn" onclick="cycleDisplayMode()">表示切替</button>
-            <!-- <button class="btn graph-btn" onclick="showGraph()">グラフ表示</button> -->
             <button class="btn export-btn" onclick="exportCSV()">CSVファイル出力</button>
             <button class="btn import-btn" onclick="document.getElementById('importFile').click()">CSVから復元</button>
             <input type="file" id="importFile" style="display:none" accept=".csv" onchange="importCSV(this)">
@@ -267,96 +264,75 @@
         titleEl.addEventListener('blur', () => localStorage.setItem('app_title', titleEl.innerText));
         titleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); } });
 
-        // --- スワイプとスムーズアニメーションの修正 ---
         let startX = 0;
         let currentX = 0;
         let isDragging = false;
-        let isAnimating = false; // アニメーション中フラグ
+        let isAnimating = false;
         const swipeArea = document.getElementById('calendarSwipeArea');
         const grid = document.getElementById('calendarGrid');
 
-        // タッチ開始
         swipeArea.addEventListener('touchstart', (e) => {
-            if (isAnimating) return; // アニメーション中は無視
+            if (isAnimating) return;
             startX = e.touches[0].clientX;
-            currentX = startX; // 初期化
+            currentX = startX;
             isDragging = true;
-            grid.classList.remove('is-animating'); // 手動移動中はTransitionをオフ
+            grid.classList.remove('is-animating');
         }, {passive: true});
 
-        // タッチ移動
         swipeArea.addEventListener('touchmove', (e) => {
             if (!isDragging || isAnimating) return;
             currentX = e.touches[0].clientX;
             const diff = currentX - startX;
-            // 指に追従（重い場合は requestAnimationFrame を使うが、単純なTranslateならブラウザが最適化してくれる）
             grid.style.transform = `translateX(${diff}px)`;
         }, {passive: true});
 
-        // タッチ終了
         swipeArea.addEventListener('touchend', (e) => {
             if (!isDragging || isAnimating) return;
             isDragging = false;
             const diff = currentX - startX;
-            const threshold = swipeArea.offsetWidth * 0.25; // 閾値をコンテナ幅の25%に
+            const threshold = swipeArea.offsetWidth * 0.25;
 
             if (Math.abs(diff) > threshold) {
-                // 切り替え実行
                 isAnimating = true;
                 grid.classList.add('is-animating');
-                const diffMonth = diff > 0 ? -1 : 1; // 右スワイプなら前月(-1)
+                const diffMonth = diff > 0 ? -1 : 1;
                 completeSwipeAnimation(diffMonth);
             } else {
-                // キャンセル（元に戻る）
                 if (diff !== 0) {
                     grid.classList.add('is-animating');
                     grid.style.transform = 'translateX(0)';
-                    // Transition完了後にAnimatingフラグをオフにする必要があるが、
-                    // ここでは簡易的に入力を受け付ける状態に戻す
                 }
             }
             startX = 0; currentX = 0;
         });
 
-        // スワイプ完了時のスライドアウト〜スライドイン処理
         function completeSwipeAnimation(diffMonth) {
             const containerWidth = swipeArea.offsetWidth;
-            // 指が動いた方向（diffMonthとは逆）へスライドアウト
             const exitX = diffMonth > 0 ? -containerWidth : containerWidth;
             grid.style.transform = `translateX(${exitX}px)`;
-            grid.style.opacity = '0'; // フェードアウトも併用してスムーズに
+            grid.style.opacity = '0';
 
-            // スライドアウト完了後
             setTimeout(() => {
-                // 1. 完全に非表示にする（Transitionをオフ）
                 grid.classList.remove('is-animating');
                 
-                // 2. 新しい月が来る方向（消えた方向と逆）の画面外へ移動
                 grid.style.transform = `translateX(${-exitX}px)`;
 
-                // 3. データと日付更新
                 viewDate.setMonth(viewDate.getMonth() + diffMonth);
                 
-                // 4. ブラウザが位置変更を認識するのを待ってから描画更新とスライドイン
-                // requestAnimationFrame を2回重ねることで、確実に待機位置への移動をブラウザに認識させる
                 requestAnimationFrame(() => {
-                    // ここで描画更新（画面外にいる状態）
                     renderCalendar();
 
                     requestAnimationFrame(() => {
-                        // 5. アニメーションをオンにして中央に戻す
                         grid.classList.add('is-animating');
                         grid.style.transform = 'translateX(0)';
                         grid.style.opacity = '1';
                         
-                        // アニメーション完了後にフラグ解
                         setTimeout(() => { isAnimating = false; }, 300);
                     });
                 });
-            }, 300); // CSSのTransition時間と合わせる
+            }, 300);
         }
 
-        // ナビボタン操作（追従なしのスライド）
         function navChangeMonth(diffMonth) {
             if (isAnimating) return;
             isAnimating = true;
@@ -364,14 +340,13 @@
             const containerWidth = swipeArea.offsetWidth;
             grid.classList.add('is-animating');
             
-            // 次月(1)なら左(-Width)へ、前月(-1)なら右(Width)へ消える
             const exitX = diffMonth > 0 ? -containerWidth : containerWidth;
             grid.style.transform = `translateX(${exitX}px)`;
             grid.style.opacity = '0';
 
             setTimeout(() => {
                 grid.classList.remove('is-animating');
-                grid.style.transform = `translateX(${-exitX}px)`; // 反対側へ
+                grid.style.transform = `translateX(${-exitX}px)`;
 
                 viewDate.setMonth(viewDate.getMonth() + diffMonth);
                 
@@ -387,7 +362,6 @@
             }, 300);
         }
 
-        // --- 以下、ロジック関数群（変更なし） ---
         const dayHeaderHtml = '<div class="day-header">日</div><div class="day-header">月</div><div class="day-header">火</div><div class="day-header">水</div><div class="day-header">木</div><div class="day-header">金</div><div class="day-header">土</div>';
 
         function autoCalcLot() {
@@ -408,7 +382,6 @@
             const headerEl = document.getElementById('calendarHeader');
             if(headerEl) headerEl.innerText = `${year}年 ${month + 1}月`;
             
-            // グリッドのリセット（ヘッダー再描画）
             grid.innerHTML = dayHeaderHtml;
 
             const firstDay = new Date(year, month, 1).getDay();
@@ -527,7 +500,6 @@ function showCumulativeModal() {
             const ctx = document.getElementById('cumChart').getContext('2d');
             if (cumChartInstance) cumChartInstance.destroy();
 
-            // データがすべて0かチェック
             const allZero = cumPoints.every(v => v === 0);
 
             cumChartInstance = new Chart(ctx, {
@@ -539,7 +511,6 @@ function showCumulativeModal() {
                     scales: { 
                         y: { 
                             beginAtZero: true,
-                            // 全データ0の場合は最大・最小を0に固定して刻みを1つにする
                             max: allZero ? 0 : undefined,
                             min: allZero ? 0 : undefined,
                             ticks: { 
@@ -568,7 +539,6 @@ function showCumulativeModal() {
             const ctx = document.getElementById('balanceChart').getContext('2d');
             if (myChart) myChart.destroy();
 
-            // データがすべて0かチェック
             const allZero = dataPoints.every(v => v === 0);
 
             myChart = new Chart(ctx, {
@@ -638,8 +608,8 @@ function showCumulativeModal() {
             input.value = ""; 
         }
 
-        // 初期描画
         renderCalendar();
     </script>
 </body>
+
 </html>
