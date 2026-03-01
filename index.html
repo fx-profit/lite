@@ -181,7 +181,13 @@
     box-sizing: border-box;
     animation: slideUp 0.2s ease-out;
 }
-
+.keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3列に並べる */
+    gap: 8px; /* ボタン同士の間隔 */
+    max-width: 500px;
+    margin: 0 auto;
+}
 .keypad-grid button {
     height: 50px; /* 少し高さを出して押しやすく */
     font-size: 1.4rem;
