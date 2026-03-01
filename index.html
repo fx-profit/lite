@@ -168,6 +168,7 @@
         .save-btn { background: var(--primary); color: white; }
         .cancel-btn { background: #eee; color: #333; }
         .hidden { display: none !important; }
+
 .keypad-container {
     display: none;
     position: fixed;
@@ -263,15 +264,19 @@
     <div id="modal" class="modal" onclick="if(event.target==this)closeModal()">
         <div class="modal-content">
             <h3 id="selectedDateText" style="margin-top:0; color:var(--header-bg);">記録</h3>
-            <label>トレード回数</label>
-            <input type="number" id="tradesInput" inputmode="numeric" placeholder="0">
-            <label>獲得pips</label>
-            <input type="number" id="pipsInput" step="0.1" inputmode="decimal" placeholder="0.0" oninput="autoCalcLot()">
-            <label>当日収支</label>
-            <input type="number" id="amountInput" inputmode="decimal" pattern="[0-9]*" placeholder="0" oninput="autoCalcLot()">
+<label>トレード回数</label>
+<input type="text" id="tradesInput" placeholder="0" onclick="openKeypad('tradesInput')">
+
+<label>獲得pips</label>
+<input type="text" id="pipsInput" placeholder="0.0" onclick="openKeypad('pipsInput')">
+
+<label>当日収支</label>
+<input type="text" id="amountInput" placeholder="0" onclick="openKeypad('amountInput')">
+            
             <div id="lotResult" class="lot-display">平均ロット: ---</div>
             <label>メモ</label>
-            <textarea id="memoInput" rows="3"></textarea>
+            <textarea id="memoInput" rows="3" onfocus="closeKeypad()"></textarea>
+            
             <div class="btn-group">
                 <button class="modal-btn save-btn" onclick="saveData()">保存</button>
                 <button class="modal-btn cancel-btn" onclick="closeModal()">戻る</button>
@@ -279,7 +284,7 @@
         </div>
     </div>
 
-   <div id="customKeypad" class="keypad-container">
+    <div id="customKeypad" class="keypad-container">
         <div class="keypad-header">
             <div class="done-link" onclick="closeKeypad()">完了</div>
         </div>
