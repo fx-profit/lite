@@ -640,6 +640,35 @@ let currentData = JSON.parse(localStorage.getItem('fx_data_pro')) || {};
             const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = fileName; link.click();
         }
 
+        // カンマ含むメモに対応した堅牢なCSVパーサー
+        function parseCSVLine(line) {
+            const cols = [];
+            let cur = '', inQuote = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (inQuote) {
+                    if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                    else if (ch === '"') { inQuote = false; }
+                    else { cur += ch; }
+                } else {
+                    if (ch === '"') { inQuote = true; }
+                    else if (ch === ',') { cols.push(cur); cur = ''; }
+                    else { cur += ch; }
+                }
+            }
+            cols.push(cur);
+            return cols;
+        }
+
+        // ExcelがYYYY/M/D形式に変換した日付をYYYY-MM-DDに正規化
+        function normalizeDateKey(raw) {
+            const s = raw.replace(/^\uFEFF/, "").trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            const m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+            if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+            return null;
+        }
+
         function importCSV(input) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -647,11 +676,14 @@ let currentData = JSON.parse(localStorage.getItem('fx_data_pro')) || {};
                 try {
                     const text = e.target.result, lines = text.split(/\r?\n/), newData = {}; let count = 0;
                     for (let i = 1; i < lines.length; i++) {
-                        const cols = lines[i].split(",");
+                        if (!lines[i].trim()) continue;
+                        const cols = parseCSVLine(lines[i]);
                         if (cols.length >= 4) {
-                            const date = cols[0].replace(/^\uFEFF/, "").trim();
+                            const date = normalizeDateKey(cols[0]);
                             if (date) {
-                                newData[date] = { trades: parseInt(cols[1]) || 0, pips: parseFloat(cols[2]) || 0, amount: parseInt(cols[3]) || 0, memo: cols[4] ? cols[4].replace(/^"|"$/g, '').replace(/""/g, '"') : "" };
+                                // Excelが桁区切りカンマを付けた金額（例: "1,234"）に対応
+                                const cleanAmount = (cols[3] || "").replace(/,/g, '');
+                                newData[date] = { trades: parseInt(cols[1]) || 0, pips: parseFloat(cols[2]) || 0, amount: parseInt(cleanAmount) || 0, memo: cols[4] || "" };
                                 count++;
                             }
                         }
@@ -659,8 +691,10 @@ let currentData = JSON.parse(localStorage.getItem('fx_data_pro')) || {};
                     if (count > 0 && confirm(count + "件復元しますか？")) {
                         currentData = newData; localStorage.setItem('fx_data_pro', JSON.stringify(currentData));
                         renderCalendar(); alert("復元完了");
+                    } else if (count === 0) {
+                        alert("復元できるデータが見つかりませんでした。\nファイルの日付形式を確認してください。");
                     }
-                } catch (err) { alert("エラー"); }
+                } catch (err) { alert("読み込みエラーが発生しました。"); }
             };
             reader.readAsText(file, "UTF-8"); input.value = ""; 
         }
@@ -669,6 +703,5 @@ let currentData = JSON.parse(localStorage.getItem('fx_data_pro')) || {};
     </script>
 </body>
 </html>
-
 
 
