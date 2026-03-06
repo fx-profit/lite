@@ -532,6 +532,13 @@ let currentData = JSON.parse(localStorage.getItem('fx_data_pro')) || {};
                 grid.appendChild(dayDiv);
             }
 
+            const totalCells = firstDay + lastDate;
+            const remainingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 0; i < remainingCells; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'day other-month';
+                grid.appendChild(empty);
+            }
             updateSummary(); updateUI();
         }
 
@@ -704,6 +711,7 @@ let currentData = JSON.parse(localStorage.getItem('fx_data_pro')) || {};
     </script>
 </body>
 </html>
+
 
 
 
