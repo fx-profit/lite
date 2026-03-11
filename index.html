@@ -282,9 +282,9 @@
 <div id="modal" class="modal" onclick="if(event.target==this)saveData()">
     <div class="modal-content" id="modalContent" ontouchstart="if(!['INPUT','TEXTAREA','BUTTON'].includes(event.target.tagName))closeKeypad()">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-            <button onclick="shiftModalDate(-1)" style="background:none; border:none; font-size:1rem; cursor:pointer; padding:0 8px; color:var(--dark);">◀</button>
+            <button onclick="shiftModalDate(-1)" style="background:none; border:none; font-size:1rem; cursor:pointer; padding:0 8px; color:#ccc">◀</button>
             <h3 id="selectedDateText" style="margin:0 0 10px; color:var(--dark);"></h3>
-            <button onclick="shiftModalDate(1)" style="background:none; border:none; font-size:1rem; cursor:pointer; padding:0 8px; color:var(--dark);">▶</button>
+            <button onclick="shiftModalDate(1)" style="background:none; border:none; font-size:1rem; cursor:pointer; padding:0 8px; color:#ccc">▶</button>
         </div>
         
             <div class="input-row">
@@ -885,3 +885,4 @@ if (cur) lines.push(cur);
     </script>
 </body>
 </html>
+
