@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -8,12 +7,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="author" content="Hiroro">
-    <meta name="description" content="FXトレーダー専用の収支管理アプリです。収支金額だけでなくトレード回数やpips表示にも切り替え可能">
+    <meta name="description" content="FXトレーダー専用の収支管理アプリ。グラフ表示、年間累計表示機能。表示モードの切り替えでトレード回数やpips表示にも。">
     <title>FX日記</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         /* ===== CSS変数 ===== */
         :root {
@@ -43,9 +43,9 @@
 
         header {
             width: 100%;
-            background: linear-gradient(to bottom, #004d40 0%, #004d40 40%, #008080 40%, #008080 100%);
+            background: linear-gradient(to bottom, #004d40 0%, #004d40 25%, #008080 25%, #008080 100%);
             color: white;
-            padding-top: calc(env(safe-area-inset-top, 20px) + 50px);
+            padding-top: calc(env(safe-area-inset-top, 20px) + 35px);
             padding-bottom: 15px;
             text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -140,7 +140,7 @@
 
         .day {
             background: white;
-            aspect-ratio: 1 / 1.35;
+            aspect-ratio: 1 / 1.2;
             display: flex;
             flex-direction: column;
             padding: 2px 3px;
@@ -215,14 +215,13 @@
 
         .small-font { font-size: 0.65rem !important; }
         .negative   { color: var(--negative) !important; }
-        .positive   { color: var(--primary) !important; }
         .hidden     { display: none !important; }
 
         /* ===== サマリー ===== */
         .summary {
             margin-top: 12px;
-            background: var(--dark);
-            color: white;
+            background: #fff;
+            color: #666;
             padding: 12px;
             border-radius: 12px;
             width: 100%;
@@ -233,6 +232,7 @@
             gap: 40px;
             height: 62px;
             box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
 
         .summary-item   { text-align: center; width: 80px; flex-shrink: 0; }
@@ -242,7 +242,7 @@
 
         /* ===== アクションボタン ===== */
         .action-group {
-            margin-top: 12px;
+            margin-top: 20px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
@@ -340,6 +340,34 @@
         .input-row label { font-size: 0.8rem; color: #666; font-weight: bold; white-space: nowrap; min-width: 80px; margin: 0; }
         .input-row input { margin: 0; flex: 1; }
 
+        /* ===== シェアボタン ===== */
+        #shareBtn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 10px;
+            position: absolute;
+            right: 10px;
+            bottom: 15px;
+            color: white;
+            opacity: 0.85;
+        }
+        #shareBtn:active { opacity: 0.5; }
+
+        /* ===== フッター：バックアップ注意書き ===== */
+        .backup-notice {
+            width: 100%;
+            max-width: 500px;
+            margin: 16px 0 24px 0;
+            padding: 12px 16px;
+            box-sizing: border-box;
+            background: #fff8e1;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: #7a6000;
+            line-height: 1.6;
+        }
+        
         /* ===== カスタムテンキー ===== */
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
@@ -402,8 +430,15 @@
 </head>
 <body>
 
-    <header>
+    <header style="position:relative;">
         <h1 id="appTitle" contenteditable="true" spellcheck="false">FX日記</h1>
+        <button id="shareBtn" onclick="shareCalendar()" title="シェア">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="white" stroke-width="2"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="white" stroke-width="2"/>
+            </svg>
+        </button>
     </header>
 
     <div class="container">
@@ -423,11 +458,11 @@
                 <span id="totalTrades" class="summary-value">0回</span>
             </div>
             <div class="summary-item" id="summaryPips">
-                <span class="summary-label">合計pips</span>
+                <span class="summary-label" style=" color:var(--positive)">合計pips</span>
                 <span id="totalPips" class="summary-value">0.0</span>
             </div>
             <div class="summary-item" id="summaryAmount">
-                <span class="summary-label">今月の収支</span>
+                <span class="summary-label" style="color:var(--primary)">今月の収支</span>
                 <span id="totalAmount" class="summary-value">¥0</span>
             </div>
         </div>
@@ -897,7 +932,7 @@
                 // 12か月すべて行を追加。データなしの月は数値欄を空欄に
                 const row = document.createElement('tr');
                 if (hasData) {
-                    row.innerHTML = `<td>${m + 1}月</td><td class="${monthSum < 0 ? 'negative' : monthSum > 0 ? 'positive' : ''}">${monthSum.toLocaleString()}</td><td class="${cumulative < 0 ? 'negative' : cumulative > 0 ? 'positive' : ''}">${cumulative.toLocaleString()}</td>`;
+                    row.innerHTML = `<td>${m + 1}月</td><td class="${monthSum < 0 ? 'negative' : ''}">${monthSum.toLocaleString()}</td><td class="${cumulative < 0 ? 'negative' : ''}">${cumulative.toLocaleString()}</td>`;
                 } else {
                     row.innerHTML = `<td>${m + 1}月</td><td></td><td></td>`;
                 }
@@ -1085,6 +1120,63 @@
 
         /* ===== 初期描画 ===== */
         renderCalendar();
+
+        // ===== シェア機能 =====
+        async function shareCalendar() {
+            const header  = document.querySelector('header');
+            const calNav  = document.querySelector('.calendar-nav');
+            const calArea = document.getElementById('calendarSwipeArea');
+            const summary = document.querySelector('.summary');
+
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'background:#f0f2f5; display:inline-block; width:' + calArea.offsetWidth + 'px;';
+
+            const cloneHeader  = header.cloneNode(true);
+            const cloneNav     = calNav.cloneNode(true);
+            const cloneCal     = calArea.cloneNode(true);
+            const cloneSummary = summary.cloneNode(true);
+
+            // シェアボタンをクローンから除去
+            const shareClone = cloneHeader.querySelector('#shareBtn');
+            if (shareClone) shareClone.remove();
+
+            wrapper.appendChild(cloneHeader);
+            wrapper.appendChild(cloneNav);
+            wrapper.appendChild(cloneCal);
+            wrapper.appendChild(cloneSummary);
+            document.body.appendChild(wrapper);
+
+            try {
+                const canvas = await html2canvas(wrapper, {
+                    useCORS: true,
+                    scale: 2,
+                    backgroundColor: '#f0f2f5',
+                });
+                document.body.removeChild(wrapper);
+
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'FX日記.png', { type: 'image/png' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: 'FX日記' });
+                    } else {
+                        const a = document.createElement('a');
+                        a.href = canvas.toDataURL('image/png');
+                        a.download = 'FX日記.png';
+                        a.click();
+                    }
+                }, 'image/png');
+            } catch (e) {
+                document.body.removeChild(wrapper);
+                alert('シェアに失敗しました。');
+            }
+        }
     </script>
+    <!-- ========== フッター：バックアップ注意書き ========== -->
+    <div class="container">
+        <div class="backup-notice">
+            データはお使いのブラウザ内にのみ保存されています。ブラウザのキャッシュをクリアすると、これまでの記録がすべて消去されてしまいます。万が一に備え、定期的なバックアップをおすすめします。
+        </div>
+    </div>
+
 </body>
 </html>
