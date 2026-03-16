@@ -383,23 +383,6 @@
             animation: slideUp 0.2s ease-out;
         }
 
-        .keypad-header {
-            display: flex;
-            justify-content: center;
-            padding-bottom: 8px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .done-link {
-            color: #999;
-            transform: scaleX(2);
-            font-weight: bold;
-            font-size: 0.8rem;
-            cursor: pointer;
-            padding: 5px 30px;
-        }
-
         .keypad-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -509,9 +492,6 @@
 
     <!-- カスタムテンキー -->
     <div id="customKeypad" class="keypad-container">
-        <div class="keypad-header">
-            <div class="done-link" onclick="closeKeypad()">∨</div>
-        </div>
         <div class="keypad-grid">
             <button onclick="kpInput('1')">1</button>
             <button onclick="kpInput('2')">2</button>
