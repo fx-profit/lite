@@ -33,6 +33,8 @@
             color: #333;
             margin: 0;
             padding: 0;
+            /* iOS PWA セーフエリア対応：ステータスバー分をbodyで吸収 */
+            padding-top: env(safe-area-inset-top, 0px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -43,9 +45,9 @@
 
         header {
             width: 100%;
-            background:  var(--header-bg);
+            background: var(--header-bg);
             color: white;
-            padding-top: calc(env(safe-area-inset-top, 20px) + 15px);
+            padding-top: 15px;
             padding-bottom: 15px;
             text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
