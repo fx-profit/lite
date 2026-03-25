@@ -659,7 +659,7 @@
             </div>
             <div class="btn-group">
                 <button class="modal-btn save-btn" onclick="doJump()">移動</button>
-                <button class="modal-btn cancel-btn" onclick="closeJumpModal()">キャンセル</button>
+                <button class="modal-btn cancel-btn" onclick="goToCurrentMonth()">今月に戻る</button>
             </div>
         </div>
     </div>
@@ -1354,12 +1354,57 @@
             document.getElementById('jumpModal').style.display = 'none';
         }
 
+        function _jumpAnimate(target) {
+            if (isAnimating) return;
+            isAnimating = true;
+            const containerWidth = swipeArea.offsetWidth;
+            const goingForward   = target > viewDate;
+            const exitX          = goingForward ? -containerWidth : containerWidth;
+
+            grid.classList.add('is-animating');
+            grid.style.transform = `translateX(${exitX}px)`;
+            grid.style.opacity   = '0';
+
+            setTimeout(() => {
+                grid.classList.remove('is-animating');
+                grid.style.transform = `translateX(${-exitX}px)`;
+                viewDate = target;
+                requestAnimationFrame(() => {
+                    renderCalendar();
+                    requestAnimationFrame(() => {
+                        grid.classList.add('is-animating');
+                        grid.style.transform = 'translateX(0)';
+                        grid.style.opacity   = '1';
+                        setTimeout(() => { isAnimating = false; }, 300);
+                    });
+                });
+            }, 300);
+        }
+
         function doJump() {
             const y = parseInt(document.getElementById('jumpYear').value);
             const m = parseInt(document.getElementById('jumpMonth').value);
-            viewDate = new Date(y, m - 1, 1);
+            const target = new Date(y, m - 1, 1);
+
+            if (viewDate.getFullYear() === y && viewDate.getMonth() === m - 1) {
+                closeJumpModal();
+                return;
+            }
             closeJumpModal();
-            renderCalendar();
+            _jumpAnimate(target);
+        }
+
+        function goToCurrentMonth() {
+            const today = new Date();
+            const ty = today.getFullYear();
+            const tm = today.getMonth();
+
+            if (viewDate.getFullYear() === ty && viewDate.getMonth() === tm) {
+                closeJumpModal();
+                return;
+            }
+            closeJumpModal();
+            _jumpAnimate(new Date(ty, tm, 1));
         }
 
         /* ===== 初期描画 ===== */
