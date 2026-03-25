@@ -53,7 +53,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             margin-bottom: 10px;
         }
-
         #appTitle {
             font-size: 1.4rem;
             margin: 0;
@@ -471,12 +470,67 @@
             font-size: 0.9rem;
         }
 
+        /* ===== リスト表示ボタン ===== */
+        #listBtn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 10px;
+            position: absolute;
+            left: 48px;
+            top: 55%;
+            transform: translateY(-50%);
+            font-size: 1.3rem;
+            color: white;
+            opacity: 0.85;
+        }
+        #listBtn:active { opacity: 0.5; }
+
+        /* ===== リスト表示モーダル ===== */
+        #listModal .modal-content { max-width: 400px; }
+        .list-results {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .list-result-item {
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: #fafafa;
+            cursor: pointer;
+        }
+        .list-result-item:hover { background: #f0f4ff; }
+        .list-result-date {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        .list-result-amount {
+            font-size: 0.88rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .list-result-memo {
+            font-size: 0.82rem;
+            color: #666;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .list-no-result {
+            text-align: center;
+            color: #aaa;
+            padding: 20px 0;
+            font-size: 0.9rem;
+        }
+
         /* ===== シェアボタン ===== */
         #shareBtn {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 4px 10px;
+            padding: 2px 10px;
             position: absolute;
             right: 10px;
             bottom: 15px;
@@ -508,7 +562,7 @@
             bottom: 0; left: 0;
             width: 100%;
             background: #f1f3f4;
-            padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 8px) 16px;
+            padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px) 16px;
             box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
             z-index: 2000;
             box-sizing: border-box;
@@ -550,6 +604,12 @@
                 <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
             </svg>
         </button>
+        <button id="listBtn" onclick="openListModal()" title="リスト表示">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+        </button>
         <h1 id="appTitle" contenteditable="true" spellcheck="false">FX日記</h1>
         <button id="shareBtn" onclick="shareCalendar()" title="シェア">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -587,9 +647,7 @@
         </div>
 
         <div class="action-group">
-            <!-- <button class="btn cum-btn" onclick="showCumulativeModal()">年間累計を表示</button> -->
             <button class="btn toggle-btn" onclick="cycleDisplayMode()">表示切替</button>
-            <!-- <button class="btn graph-btn" onclick="showGraph()">グラフ表示</button> -->
             <button class="btn export-btn" onclick="exportCSV()">CSVバックアップ</button>
             <button class="btn import-btn" onclick="document.getElementById('importFile').click()">CSVから復元</button>
             <input type="file" id="importFile" style="display:none" accept=".csv" onchange="importCSV(this)">
@@ -694,6 +752,18 @@
                 <button class="search-exec-btn" onclick="execSearch()">検索</button>
             </div>
             <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <!-- リスト表示モーダル -->
+    <div id="listModal" class="modal" onclick="if(event.target==this)closeListModal()">
+        <div class="modal-content">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <h3 style="margin:0; color:var(--dark);">記録一覧</h3>
+                <button onclick="closeListModal()"
+                        style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#999; line-height:1;">×</button>
+            </div>
+            <div class="list-results" id="listResults"></div>
         </div>
     </div>
 
@@ -1310,11 +1380,68 @@
                 item.className = 'search-result-item';
                 item.innerHTML = `
                     <div class="search-result-date">${dateLabel}</div>
-                    <div class="search-result-amount" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">当日収支: ¥${amountStr}</div>
+                    <div class="search-result-amount ${isNeg ? 'negative' : ''}" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">当日収支: ¥${amountStr}</div>
                     ${memo ? `<div class="search-result-memo">${memo.replace(/</g,'&lt;')}</div>` : ''}
                 `;
                 item.onclick = () => {
                     closeSearchModal();
+                    const d2 = new Date(k);
+                    viewDate = new Date(d2.getFullYear(), d2.getMonth(), 1);
+                    renderCalendar();
+                    openModal(k);
+                };
+                container.appendChild(item);
+            });
+        }
+
+        /* ===== リスト表示機能 ===== */
+        function openListModal() {
+            const y = viewDate.getFullYear();
+            const m = viewDate.getMonth() + 1;
+            document.querySelector('#listModal h3').textContent = `${y}年${m}月の記録`;
+            document.getElementById('listModal').style.display = 'flex';
+            renderListResults();
+        }
+
+        function closeListModal() {
+            document.getElementById('listModal').style.display = 'none';
+        }
+
+        function renderListResults() {
+            const container = document.getElementById('listResults');
+            container.innerHTML = '';
+
+            const y = viewDate.getFullYear();
+            const m = String(viewDate.getMonth() + 1).padStart(2, '0');
+            const prefix = `${y}-${m}-`;
+
+            const keys = Object.keys(currentData)
+                .filter(k => k.startsWith(prefix))
+                .sort((a, b) => a.localeCompare(b));
+
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="list-no-result">この月の記録はありません</div>';
+                return;
+            }
+
+            keys.forEach(k => {
+                const d = currentData[k];
+                const parts = k.split('-');
+                const dateLabel = `${parseInt(parts[0])}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+                const amount = d.amount || 0;
+                const amountStr = amount.toLocaleString();
+                const isNeg = amount < 0;
+                const memo = d.memo ? d.memo.trim() : '';
+
+                const item = document.createElement('div');
+                item.className = 'list-result-item';
+                item.innerHTML = `
+                    <div class="list-result-date">${dateLabel}</div>
+                    <div class="list-result-amount ${isNeg ? 'negative' : ''}" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">当日収支: ¥${amountStr}</div>
+                    ${memo ? `<div class="list-result-memo">${memo.replace(/</g,'&lt;')}</div>` : ''}
+                `;
+                item.onclick = () => {
+                    closeListModal();
                     const d2 = new Date(k);
                     viewDate = new Date(d2.getFullYear(), d2.getMonth(), 1);
                     renderCalendar();
