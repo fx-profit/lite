@@ -1380,7 +1380,7 @@
                 item.className = 'search-result-item';
                 item.innerHTML = `
                     <div class="search-result-date">${dateLabel}</div>
-                    <div class="search-result-amount ${isNeg ? 'negative' : ''}" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">当日収支: ¥${amountStr}</div>
+                    <div class="search-result-amount ${isNeg ? 'negative' : ''}" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">¥${amountStr}</div>
                     ${memo ? `<div class="search-result-memo">${memo.replace(/</g,'&lt;')}</div>` : ''}
                 `;
                 item.onclick = () => {
@@ -1437,7 +1437,7 @@
                 item.className = 'list-result-item';
                 item.innerHTML = `
                     <div class="list-result-date">${dateLabel}</div>
-                    <div class="list-result-amount ${isNeg ? 'negative' : ''}" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">当日収支: ¥${amountStr}</div>
+                    <div class="list-result-amount ${isNeg ? 'negative' : ''}" style="color:${isNeg ? 'var(--negative)' : 'var(--primary)'}">¥${amountStr}</div>
                     ${memo ? `<div class="list-result-memo">${memo.replace(/</g,'&lt;')}</div>` : ''}
                 `;
                 item.onclick = () => {
